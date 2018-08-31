@@ -56,7 +56,6 @@ $(document).ready(function(){
 	cell = "<div class='cell'></div>";
 
 
-
 	// 
 	// MENU
 
@@ -195,8 +194,8 @@ $(document).ready(function(){
 	]
 
 
+
 	// prepare pieces
-	preparePieces();
 
 	function preparePieces() {
 		css = "";
@@ -210,8 +209,46 @@ $(document).ready(function(){
 	
 
 
-	// helper
-	board = $("#board");
+	board = $("#board");	
+	activePlayer = 2;
+	scores = [
+		{"nrOfPieces" : 0, "pieces": [] },
+		{"nrOfPieces" : 0, "pieces": [] }
+	];
+
+	// console.log(score);
+
+	function updateScore(player, piece) {
+		// console.log(piece);
+		incrementScore(player, piece);
+		showScore();
+	}
+
+	// score
+	function incrementScore(player, piece) {
+		console.log(score);
+		console.log(player - 1);
+		scores[player - 1]["nrOfPieces"]++;
+		scores[player - 1]["pieces"].push(piece);
+	}
+
+	function showScore() {
+		scoreElem = $("#score");
+		scoreText = "";
+		for (var i = 0; i < scores.length; i++) {
+			
+			player = i + 1;
+
+			score = scores[i]["nrOfPieces"];
+
+			scoreText += `player ${player} = ${score}\n `;
+		}
+
+		scoreElem.text(scoreText);
+
+		console.log(scores);
+	}
+
 
 	setupBoard();
 
@@ -219,12 +256,15 @@ $(document).ready(function(){
 		$("#board").empty();		
 		removeCellEvent();
 		activePiece = false;
-
+		activePlayer = 2;
 	}
 
 	function setupBoard() {
 		drawBoard();
 		createCellEvent();
+		setupPlayerBoard();
+		preparePieces();
+		sendMessageToPlayer(2, "It's your turn");
 		populateBoard(defaultBoard);
 	}
 
@@ -254,7 +294,7 @@ $(document).ready(function(){
 
 		customCSS = `.cell {width:calc(100% / ${boardDimensions[0]}); height:calc(100% / ${boardDimensions[1]});}`;
 		customCSS += `.cell[bgcolor="1"] {background-color:${color1}} .cell[bgcolor="2"] {background-color:${color2}}`;
-		customCSS += `#board { height:80vmin; width:calc(80vmin * ${boardWidth} ) }`;
+		customCSS += `#board { height:80vmin; width:calc(80vmin * ${boardWidth} ) } @media screen and (max-width:40rem) { #board { height:100vmin; width:calc(100vmin * ${boardWidth} ) } }`;
 		addCustomCSS(customCSS);
 	}
 
@@ -273,6 +313,27 @@ $(document).ready(function(){
 			}
 			$(this).attr({"piece": piece, "player": player, "firstMove": true});
 		});
+	}
+
+
+	function setupPlayerBoard() {
+		nrOfPlayers = 2;
+		playerNames = ["black", "white"];
+		playerContainer = ".player-message-container";
+
+		for (var i = 0; i < nrOfPlayers; i++) {
+			playerMessageBoard = "<div player=" + (i + 1) + " class='player-board'><h1>" + playerNames[i] + "</h1><div class='player-messages'></div></div>";
+			console.log(playerMessageBoard);
+			$(playerMessageBoard).appendTo(playerContainer);
+		}
+	}
+
+	function sendMessageToPlayer(player, message) {
+		$(".player-board[player=" + player + "] > .player-messages").text(message);
+	}
+
+	function clearMessages() {
+		$(".player-board > .player-messages").text("");
 	}
 
 	function getCellIndexByPos(pos) {
@@ -299,10 +360,12 @@ $(document).ready(function(){
 	function createCellEvent() {		
 		$('.cell').on("click touch", function() {
 			elem = $(this);
-
+			player = elem.attr("player");
 			if (activePiece == false) {
 
-				selectPiece(elem);
+				if (playerIsActive(player)) {
+					selectPiece(elem);
+				}
 
 				
 			} else {
@@ -315,6 +378,17 @@ $(document).ready(function(){
 
 	function removeCellEvent() {
 		$('.cell').unbind("click touch");
+	}
+
+	function playerIsActive(player) {
+		console.log(player + " == " + activePlayer);
+		return (player == activePlayer) ? true : false;
+	}
+
+	function SwitchPlayer() {
+		activePlayer = (activePlayer == 1) ? 2 : 1;
+		clearMessages();
+		sendMessageToPlayer(activePlayer, "It's your turn");
 	}
 
 	function selectPiece(elem) {
@@ -352,21 +426,24 @@ $(document).ready(function(){
 	function placePieceSequence(elem) {
 		index = elem.index();
 		pos = getCellPosByIndex(index);
-		console.log(pos);
+		piece = getPieceByCell(pos);
+		console.log(piece);
 		validMoves = activePiece["moves"]["validMoves"];
 		validCaptures = activePiece["moves"]["validCaptures"];
 		prefLocation = activePiece["elem"];
 		if (cellIncludedInMoves(pos,validMoves)) {
 
 			// update board
-
+			SwitchPlayer();
 			placePiece(prefLocation, elem);
 		} else if (cellIncludedInMoves(pos,validCaptures)) {
 
 			// update board
 
 			// update score
+			updateScore(activePlayer, piece);
 
+			SwitchPlayer();
 			placePiece(prefLocation, elem);
 		} else {
 			abortPlacing();

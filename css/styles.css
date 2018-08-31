@@ -174,3 +174,59 @@ menu h6 {
 .piece-hover {
 	background-size:120% 120%;
 }
+
+
+
+/* message board */
+
+.player-message-container {
+  width:100vw;
+  height:100vh;
+  position:absolute;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  top:0;
+  left:0;
+  pointer-events: none;
+}
+
+.player-board {
+  height:calc((100vh - 80vmin) / 2);
+  width:100vw;
+  padding:2rem;
+  display:flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: all;
+}
+
+@media screen and (max-width: 40rem) {
+
+  .player-board {
+    height:calc((100vh - 100vmin) / 2);
+  }
+}
+
+@media screen and (min-width: 80rem) {  
+  .player-message-container {    
+    flex-direction:row;
+  }
+
+  .player-board {
+    height:100vh;
+    width:calc((100vw - 80vmin) / 2);
+  }
+}
+
+.player-board h1 {
+  margin:0;
+  text-align: center;
+  margin-bottom:1rem;
+}
+
+.player-messages {
+  text-align: center;
+  font-size: 2rem;
+}
