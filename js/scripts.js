@@ -1,8 +1,28 @@
 $(document).ready(function(){
 	// chess settings
-	var boardDimensions = [8,8];
-	var color1 = "#e9c88b";
-	var color2 = "#be7f49";
+	
+
+	settings = {
+		"width":8,
+		"height":8,
+		"color1":"#e9c88b",
+		"color2": "#be7f49",
+	}
+
+	if (localStorage.getItem("settings") !== null) {
+		settings = JSON.parse(localStorage.getItem("settings"));
+		console.log("getting settings from localstorage");
+		console.log(settings);
+	} else {
+		updateSettings(settings);
+		console.log("no localstorage settings found");
+	}
+
+	function updateSettings(settings) {
+		localStorage.setItem("settings", JSON.stringify(settings));
+	}
+
+
 	// CHESSPIECES ID'S //
 	// 1 	= white pawn
 	// 2 	= white knight
@@ -29,11 +49,11 @@ $(document).ready(function(){
 	];
 
 
+
 	customCSSElem = $("<style class='customCSS'></style>");
 	customCSSElem.appendTo("body");
 	customCSS = ``;
 	cell = "<div class='cell'></div>";
-
 
 
 
@@ -43,43 +63,100 @@ $(document).ready(function(){
 	var menu = "#main-menu > .menu-items";
 	var menuElem = $(menu);
 	var elem;
+	var menuItems = [];
 
 	// menu
-	function createMenuItem(slug, text, type, value ) {
-		switch (type) {
+	function createMenuItem(label, items = [] ) {
+		elem = "";
+		for (var i = 0; i < items.length; i++) {
+			slug = items[i][0];
+			type = items[i][1];
+			value = items[i][2];
+
+			switch (type) {
 			case "text":
-				elem = generateTextMenuItem(slug, text, type, value);
+				elem += generateTextMenuItem(slug, type, value);
 				break;
 			case "color":
-				elem = generateColorMenuItem(slug, text, type, value);
+				elem += generateColorMenuItem(slug, type, value);
 				break;
 			case "number":
-				elem = generateNumberMenuItem(slug, text, type, value);
+				elem += generateNumberMenuItem(slug, type, value);
 				break;
+			}
+
+			menuItems.push([slug,type,value]);
+
 		}
+		
 
 		console.log(menu);
 		console.log(elem);
 
-		$(elem).appendTo(menu);
+		menuItem = `<li><label>${label}</label><div class="input-group">${elem}</div>`; 
+
+
+		$(menuItem).appendTo(menu);
 	}
 
-	function generateNumberMenuItem(slug, text, type, value) {
-		return `<li><label for="${slug}">${text}</label><input type="${type}" value="${value}"></li>`;
+	function generateNumberMenuItem(slug, type, value) {
+		return `<input name="${slug}" type="${type}" value="${value}">`;
+	}
+
+	function generateColorMenuItem(slug, type, value) {
+		return `<input name="${slug}" type="${type}" value="${value}">`;
 	}
 
 	
 
-	createMenuItem("width", "Width", "number", boardDimensions[0]);
-	createMenuItem("height", "height", "number", boardDimensions[1]);
+	createMenuItem("dimensions", [["width", "number", settings["width"]], ["height", "number", settings["height"]]]);
+	createMenuItem("Colors", [["color1", "color", settings["color1"]], ["color2", "color", settings["color2"]]]);
 
 
 	$(".menu-button").on("click", function() {
-
+		var targetMenu = $(this).closest("menu");
+		targetMenu.toggleClass("collapsed");
 	});
+
+	function getMenuValue(slug) {
+		return $(".menu-items  input[name=" + slug + "]").val();
+	}
+
+	function updateMenuList() {
+		for (var i = 0; i < menuItems.length; i++) {
+			menuItems[i][2] = getMenuValue(menuItems[i][0]);
+		}
+	}
+
+
+
+	
 
 	// END MENU
 
+
+	var boardDimensions = [settings["width"], settings["height"]];
+	var color1 = settings["color1"];
+	var color2 = settings["color2"];
+
+	$('.update-settings').on("click", function() {
+		updateMenuList();
+		console.log(menuItems);	
+		boardDimensions = [getMenuValue("width"), getMenuValue("height")];
+		color1 = getMenuValue("color1");
+		color2 = getMenuValue("color2");
+
+		settings = {
+			"width":boardDimensions[0],
+			"height":boardDimensions[1],
+			"color1":color1,
+			"color2": color2,
+		}
+
+		updateSettings(settings);
+		clearBoard();
+		setupBoard();
+	})
 
 
 	// piece rules
@@ -118,7 +195,6 @@ $(document).ready(function(){
 	]
 
 
-
 	// prepare pieces
 	preparePieces();
 
@@ -131,6 +207,7 @@ $(document).ready(function(){
 		}
 		addCustomCSS(css);
 	}
+	
 
 
 	// helper
@@ -138,12 +215,21 @@ $(document).ready(function(){
 
 	setupBoard();
 
+	function clearBoard() {
+		$("#board").empty();		
+		removeCellEvent();
+		activePiece = false;
+
+	}
+
 	function setupBoard() {
 		drawBoard();
+		createCellEvent();
 		populateBoard(defaultBoard);
 	}
 
 	function drawBoard() {
+		console.log("drawing board");
 		color = 1;
 		isEven = (boardDimensions[0] % 2) == 0 ? true : false;
 		// console.log(isEven);
@@ -175,6 +261,7 @@ $(document).ready(function(){
 	var cells;
 
 	function populateBoard(boardLayout) {
+		console.log("populating board");
 		// console.log(boardLayout);
 		cells = $('#board .cell');
 		cells.each(function(index) {
@@ -209,23 +296,26 @@ $(document).ready(function(){
 	activePiece = false;
 
 
-	$('.cell').on("click", function() {
-		elem = $(this);
+	function createCellEvent() {		
+		$('.cell').on("click touch", function() {
+			elem = $(this);
 
-		if (activePiece == false) {
+			if (activePiece == false) {
 
-			selectPiece(elem);
+				selectPiece(elem);
 
-			
-		} else {
+				
+			} else {
 
-			placePieceSequence(elem);
+				placePieceSequence(elem);
 
-		}
+			}
+		})
+	}
 
-		
-
-	})
+	function removeCellEvent() {
+		$('.cell').unbind("click touch");
+	}
 
 	function selectPiece(elem) {
 		index = elem.index();
