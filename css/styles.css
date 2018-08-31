@@ -1,0 +1,59 @@
+/* fonts */
+@import url('https://fonts.googleapis.com/css?family=Roboto:400,400i,700,900');
+
+body {
+	margin:0;
+	padding:0;
+	font-family:"Roboto", sans-serif;
+}
+
+.container {
+}
+
+menu {
+	margin: 0;
+    padding: 1rem;
+    height: 100vh;
+    background-color:white;
+    position: absolute;
+    top:0;
+    left:0;
+    z-index: 100;
+    width:400px;
+}
+
+menu h1 {
+
+}
+
+.menu-items {
+
+}
+
+
+.board-container {
+	width:100vw;
+	height:100vh;
+	display:flex;
+	align-items: center;
+	justify-content: center;
+	background-color:whitesmoke;
+}
+
+#board {
+	height:80vmin;
+	width:80vmin;
+	background-color:white;
+	display:flex;
+	flex-wrap: wrap;
+}
+
+.cell {
+	background-size:100% 100%;
+	background-position: center;
+	transition:.3s;
+}
+
+.piece-hover {
+	background-size:120% 120%;
+}
