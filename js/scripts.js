@@ -259,7 +259,7 @@ $(document).ready(function(){
 			scoreText += `player ${player} = ${score}\n `;
 		}
 
-		scoreElem.text(scoreText);
+		// scoreElem.text(scoreText);
 
 		console.log(scores);
 	}
