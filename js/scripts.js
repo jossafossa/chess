@@ -8,6 +8,7 @@ $(document).ready(function(){
 		"color1":"#e9c88b",
 		"color2": "#be7f49",
 	}
+	maxSize = 64;
 
 	if (localStorage.getItem("settings") !== null) {
 		settings = JSON.parse(localStorage.getItem("settings"));
@@ -64,6 +65,7 @@ $(document).ready(function(){
 	var elem;
 	var menuItems = [];
 
+
 	// menu
 	function createMenuItem(label, items = [] ) {
 		elem = "";
@@ -115,10 +117,15 @@ $(document).ready(function(){
 	$(".menu-button").on("click", function() {
 		var targetMenu = $(this).closest("menu");
 		targetMenu.toggleClass("collapsed");
+		$(this).toggleClass("open");
 	});
 
 	function getMenuValue(slug) {
 		return $(".menu-items  input[name=" + slug + "]").val();
+	}
+
+	function setMenuValue(slug, value) {
+		$(".menu-items  input[name=" + slug + "]").val(value);
 	}
 
 	function updateMenuList() {
@@ -141,6 +148,14 @@ $(document).ready(function(){
 	$('.update-settings').on("click", function() {
 		updateMenuList();
 		console.log(menuItems);	
+
+		if (getMenuValue("width") > maxSize) {
+			setMenuValue("width", maxSize);
+		}
+		if (getMenuValue("height") > maxSize) {
+			setMenuValue("height", maxSize);
+		}
+
 		boardDimensions = [getMenuValue("width"), getMenuValue("height")];
 		color1 = getMenuValue("color1");
 		color2 = getMenuValue("color2");
@@ -253,7 +268,8 @@ $(document).ready(function(){
 	setupBoard();
 
 	function clearBoard() {
-		$("#board").empty();		
+		$("#board").empty();
+		$("#player-message-container").empty();		
 		removeCellEvent();
 		activePiece = false;
 		activePlayer = 2;
@@ -319,7 +335,7 @@ $(document).ready(function(){
 	function setupPlayerBoard() {
 		nrOfPlayers = 2;
 		playerNames = ["black", "white"];
-		playerContainer = ".player-message-container";
+		playerContainer = "#player-message-container";
 
 		for (var i = 0; i < nrOfPlayers; i++) {
 			playerMessageBoard = "<div player=" + (i + 1) + " class='player-board'><h1>" + playerNames[i] + "</h1><div class='player-messages'></div></div>";
@@ -333,7 +349,7 @@ $(document).ready(function(){
 	}
 
 	function clearMessages() {
-		$(".player-board > .player-messages").text("");
+		$("#player-message-container").html("");
 	}
 
 	function getCellIndexByPos(pos) {
@@ -472,7 +488,6 @@ $(document).ready(function(){
 		piece = from.attr("piece");
 		player = from.attr("player");
 		from.attr({"piece": 0, "player": 0, "firstmove" : false});
-		from.css({"box-shadow": "0 0 0 5px purple inset"});
 		to.attr({"piece": piece, "player":player });
 		to.attr({"firstmove": false});
 		activePiece = false;		
@@ -615,7 +630,7 @@ $(document).ready(function(){
 					if (posIsEmpty(pos) && posIsOnBoard(pos)) {			
 								
 						validMoves.push(pos);
-						highlightCell(pos, "red");
+						highlightMoveCell(pos);
 					} else {		
 								
 						loop = false;
@@ -627,7 +642,7 @@ $(document).ready(function(){
 				if (posIsOnBoard(pos) && posIsEmpty(pos, player)) {
 					piece = getPieceByCell(pos);
 
-					highlightCell(pos, "red");
+					highlightMoveCell(pos);
 					validMoves.push(pos);	
 				}
 			}
@@ -672,7 +687,7 @@ $(document).ready(function(){
 								loop = false;			
 									
 								validCaptures.push(pos);
-								highlightCell(pos, "green");
+								highlightCaptureCell(pos);
 							} 
 							k++;
 						}
@@ -689,7 +704,7 @@ $(document).ready(function(){
 				// console.log(pos);
 				// console.log(posIsOpponent(pos));
 				if (posIsOpponent(pos,player)) {				
-					highlightCell(pos, "green");
+					highlightCaptureCell(pos);
 					validCaptures.push(pos);
 				}
 			}
@@ -746,12 +761,18 @@ $(document).ready(function(){
 	}
 
 	function removeHighlight() {		
-		cells.css({"box-shadow":`0 0 0 0 black`});
+		cells.removeClass("capture-cell");
+		cells.removeClass("move-cell");
 	}
 
-	function highlightCell(pos, color) {
+	function highlightCaptureCell(pos) {
 		index = getCellIndexByPos(pos);
-		cells.eq(index).css({"box-shadow":`0 0 0 5px ${color} inset`} );
+		cells.eq(index).addClass("capture-cell");
+	}
+
+	function highlightMoveCell(pos) {
+		index = getCellIndexByPos(pos);
+		cells.eq(index).addClass("move-cell");
 	}
 
 	function posIsOnBoard(pos) {
