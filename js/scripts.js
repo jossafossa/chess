@@ -39,8 +39,8 @@ $(document).ready(function(){
 	// 11 	= black king
 	// 12 	= black queen
 	var defaultBoard = [
-		4 ,2 ,3 ,6 ,5 ,3 ,2 ,4 ,
-		1 ,1 ,1 ,1 ,1 ,1 ,1 ,1 ,
+		4 ,2 ,3 ,6 ,0 ,3 ,2 ,4 ,
+		1 ,1 ,1 ,1 ,7 ,1 ,1 ,1 ,
 		0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
 		0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
 		0 ,0 ,0 ,0 ,0 ,0 ,0 ,0 ,
@@ -193,13 +193,13 @@ $(document).ready(function(){
 	// [id, name, player, image, logic]
 
 	pieces = [		
-		[1, 	"pawn", 	1, "img/pawn1.svg", "m0,1;f0,1i2;c1,1;c-1,1"],
+		[1, 	"pawn", 	1, "img/pawn1.svg", "m0,1;f0,1i2;c1,1;c-1,1;tr8:6"],
 		[2, 	"knight", 	1, "img/knight1.svg", "mc1,2;mc2,1;mc2,-1;mc1,-2;mc-1,-2;mc-2,-1;mc-2,1;mc-1,2"],
 		[3, 	"bishop", 	1, "img/bishop1.svg", "mc1,1i;mc1,-1i;mc-1,-1i;mc-1,1i"],
 		[4, 	"rook", 	1, "img/rook1.svg", "mc0,1i;mc1,0i;mc0,-1i;mc-1,0i"],
 		[5, 	"king", 	1, "img/king1.svg", "mc0,1;mc1,1;mc1,0;mc1,-1;mc0,-1;mc-1,-1;mc-1,0;mc-1,1"],
 		[6, 	"queen", 	1, "img/queen1.svg", "mc0,1i;mc1,1i;mc1,0i;mc1,-1i;mc0,-1i;mc-1,-1i;mc-1,0i;mc-1,1i"],
-		[7, 	"pawn", 	2, "img/pawn2.svg", "m0,-1;f0,-1i2;c1,-1;c-1,-1"],
+		[7, 	"pawn", 	2, "img/pawn2.svg", "m0,-1;f0,-1i2;c1,-1;c-1,-1;tr1:12"],
 		[8, 	"knight", 	2, "img/knight2.svg", "mc1,2;mc2,1;mc2,-1;mc1,-2;mc-1,-2;mc-2,-1;mc-2,1;mc-1,2"],
 		[9, 	"bishop", 	2, "img/bishop2.svg", "mc1,1i;mc1,-1i;mc-1,-1i;mc-1,1i"],
 		[10, 	"rook", 	2, "img/rook2.svg", "mc0,1i;mc1,0i;mc0,-1i;mc-1,0i"],
@@ -365,6 +365,12 @@ $(document).ready(function(){
 		return pos;
 	}
 
+
+	function getElemByIndex(index) {
+		elem = cells.eq(index);
+		return elem;
+	}
+
 	function addCustomCSS(css) {
 		currentCSS = customCSSElem.text();
 		customCSSElem.text(currentCSS + css);
@@ -422,7 +428,7 @@ $(document).ready(function(){
 
 			parsedLogic = parseLogic(logic);
 
-			// console.log(parsedLogic);
+			console.log(parsedLogic);
 
 			player = getPieceByCell(ppos)["player"];
 
@@ -445,13 +451,24 @@ $(document).ready(function(){
 		piece = getPieceByCell(pos);
 		console.log(piece);
 		validMoves = activePiece["moves"]["validMoves"];
+		transformLocations = activePiece["moves"]["transformLocations"];
 		validCaptures = activePiece["moves"]["validCaptures"];
 		prefLocation = activePiece["elem"];
 		if (cellIncludedInMoves(pos,validMoves)) {
 
+			
+
 			// update board
 			SwitchPlayer();
 			placePiece(prefLocation, elem);
+
+			for (var i = transformLocations.length - 1; i >= 0; i--) {
+				transformLocation = transformLocations[i];
+				pieceID = transformLocation[1];
+				if (cellIsTransformLocation(pos,transformLocation)) {
+					changePieceAtCell(pos, pieceID);
+				}
+			}
 		} else if (cellIncludedInMoves(pos,validCaptures)) {
 
 			// update board
@@ -477,11 +494,73 @@ $(document).ready(function(){
 		}
 	}
 
+	function cellIsTransformLocation(pos, transformLocation) {
+		axis = transformLocation[2];
+		rowOrCol = transformLocation[0];
+
+		if (axis == "r") {
+			if ( cellPosOnRow(pos, rowOrCol)) {
+				return true;
+			}				
+		}
+
+		if (axis == "c") {
+			if ( cellPosOnCol(pos, rowOrCol)) {
+				return true;
+			}				
+		}
+		return false;
+
+		console.log(axis);
+		console.log(transformLocation);
+	}
+
+
+
+	function cellPosOnRow(pos, row) {
+		if (pos[1] == row - 1) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	function cellPosOnCol(pos, col) {
+		if (pos[0] == col - 1) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	// function compareCells
+	// - determines if two positions are the same
+	// param cell1: pos 1
+	// param cell2: pos 2
+	// returns boolean
+
+	function compareCells(cell1, cell2) {
+		for (var i = 0; i < cell1.length; i++) {
+			if (cell1[i] != cell2[i]) {
+				return false;
+			}
+		}
+		return true
+	}
+
 	function abortPlacing() {		
 		activePiece = false;
 		cells.removeClass("piece-hover");
 		removeHighlight();
 
+	}
+
+	function changePieceAtCell(pos, pieceID) {
+		index = getCellIndexByPos(pos);
+		elem = getElemByIndex(index);
+		console.log("transforming to " + pieceID);
+		console.log(elem);
+		elem.attr({"piece": pieceID});
 	}
 
 	function placePiece(from, to) {
@@ -511,6 +590,7 @@ $(document).ready(function(){
 		captureCaptures = [];
 		firstCaptures = [];
 		firstMoves = [];
+		transformLocations = [];
 
 		for (var i = 0; i < logic.length; i++) {
 			rule = logic[i];
@@ -531,45 +611,78 @@ $(document).ready(function(){
 
 			regex = /[\-0-9]+,[\-0-9]+/g;
 
-			pos = rule.match(regex)[0].split(",");
-			for (var j = 0; j < pos.length; j++) {
-				pos[j] = parseInt(pos[j]);
+			// is coordinate
+			if (rule.match(regex) !== null) {
+				pos = rule.match(regex)[0].split(",");
+				for (var j = 0; j < pos.length; j++) {
+					pos[j] = parseInt(pos[j]);
+				}
+
+				if (suffixes.includes("i")) {
+					pos.push(true);
+				} else {
+					pos.push(false);
+				}
+
+				if (suffixes.length > 1 ) {				
+					pos.push(suffixes[1]);
+				} else {			
+					pos.push(64);				
+				}
+
+
+			// 
+			
+
+			
+
+				// if move add to moves[]
+				if (prefixes.includes("m")) {
+					moves.push(pos);
+				}
+
+				// if capturemove add to captureMoves[]
+				if (prefixes.includes("c")) {
+					captureMoves.push(pos);
+				}
+
+
+				// if firstMoves
+				if (prefixes.includes("f")) {
+					firstMoves.push(pos);
+				}
+
+				// if firstMoves
+				if (prefixes.includes("f") && prefixes.includes("c")) {
+					firstCaptures.push(pos);
+				}
+			}
+			regex = /[\-0-9]+:[\-0-9]+/g;
+			if (rule.match(regex) !== null) {
+				pos = rule.match(regex)[0].split(/[:]+/);
+				for (var j = 0; j < pos.length; j++) {
+					pos[j] = parseInt(pos[j]);
+				}
 			}
 
-			//console.log(prefixes);
+			
 
-			if (suffixes.includes("i")) {
-				pos.push(true);
-			} else {
-				pos.push(false);
+			
+
+
+			console.log(prefixes);
+
+
+			if (prefixes.includes("t")) {
+				if (prefixes.includes("r")) {
+					pos.push("r");
+					transformLocations.push(pos);
+				} else if (prefixes.includes("c")){
+					pos.push("c");
+					transformLocations.push(pos);
+				}
 			}
 
-			if (suffixes.length > 1 ) {				
-				pos.push(suffixes[1]);
-			} else {			
-				pos.push(99);				
-			}
-
-			// if move add to moves[]
-			if (prefixes.includes("m")) {
-				moves.push(pos);
-			}
-
-			// if capturemove add to captureMoves[]
-			if (prefixes.includes("c")) {
-				captureMoves.push(pos);
-			}
-
-
-			// if firstMoves
-			if (prefixes.includes("f")) {
-				firstMoves.push(pos);
-			}
-
-			// if firstMoves
-			if (prefixes.includes("f") && prefixes.includes("c")) {
-				firstCaptures.push(pos);
-			}
 		}
 
 
@@ -578,7 +691,8 @@ $(document).ready(function(){
 			"moves" : moves,
 			"captureMoves" : captureMoves,
 			"firstMoves" : firstMoves,
-			"firstCaptures" : firstCaptures
+			"firstCaptures" : firstCaptures,
+			"transformLocations" : transformLocations,
 		};
 	}
 
@@ -589,6 +703,7 @@ $(document).ready(function(){
 		captures = logic["captureMoves"];
 		firstMoves = logic["firstMoves"];
 		firstCaptures = logic["firstCaptures"];
+		transformLocations = logic["transformLocations"];
 		validMoves = [];
 		validCaptures = [];
 		firstMove = getPieceByCell(piecePos)["firstMove"];
@@ -715,7 +830,7 @@ $(document).ready(function(){
 
 
 
-		return {"validMoves": validMoves, "validCaptures" : validCaptures };
+		return {"validMoves": validMoves, "validCaptures" : validCaptures, "transformLocations" : transformLocations };
 
 
 	}
