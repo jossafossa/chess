@@ -349,7 +349,7 @@ $(document).ready(function(){
 	}
 
 	function clearMessages() {
-		$("#player-message-container").html("");
+		$(".player-messages").html("");
 	}
 
 	function getCellIndexByPos(pos) {
